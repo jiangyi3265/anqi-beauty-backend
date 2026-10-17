@@ -39,7 +39,7 @@
 3. `sql/anqi-staff-scheduling.sql`
 4. `sql/anqi-income-config.sql`
 
-前两个是新库初始化脚本，不能覆盖现有业务数据库。管理员 `admin` 的密码初始为空，无法直接登录；请按 [SQL 说明](sql/README.md) 生成独立 BCrypt 哈希并写入管理员记录。项目不提供通用登录密码。
+前两个是新库初始化脚本，不能覆盖现有业务数据库。管理员 `admin` 的密码初始为空，无法直接登录；请按 [SQL 说明](sql/README.md) 为符合 5–20 位长度限制的独立密码生成 BCrypt 哈希并写入管理员记录。项目不提供通用登录密码。
 
 ### 2. 配置运行环境
 
