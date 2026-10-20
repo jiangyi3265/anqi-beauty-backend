@@ -102,7 +102,7 @@ public class SysLoginController
     {
         Long userId = SecurityUtils.getUserId();
         List<SysMenu> menus = menuService.selectMenuTreeByUserId(userId);
-        menus.removeIf(menu -> !java.util.Arrays.asList(3000L, 3200L, 3201L).contains(menu.getMenuId()));
+        menus.removeIf(menu -> !java.util.Arrays.asList(3000L, 3200L, 3201L, 3400L).contains(menu.getMenuId()));
         for (SysMenu menu : menus) { menu.getChildren().removeIf(child -> "1".equals(child.getVisible())); }
         return AjaxResult.success(menuService.buildMenus(menus));
     }

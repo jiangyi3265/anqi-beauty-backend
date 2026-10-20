@@ -28,17 +28,17 @@ public class AnqiController {
  @RequestMapping("/api/**")
  public ResponseEntity<String> customer(HttpServletRequest req,@RequestBody(required=false) String body){
   String uri=req.getRequestURI();
-  if(!uri.matches("/api/(health|bootstrap|auth/(wechat|refresh|logout)|activities|alliances|me(/avatar)?|share-code|sign|rewards|ledger|redemptions|orders(/[a-zA-Z0-9-]+(/(pay|cancel))?)?|addresses(/[a-zA-Z0-9-]+)?|appointments|appointment-options|claims|shares|earnings|earnings-summary)"))return ResponseEntity.status(404).contentType(MediaType.APPLICATION_JSON).body("{\"error\":\"接口不存在\"}");
+  if(!uri.matches("/api/(health|bootstrap|auth/(wechat|refresh|logout)|activities|alliances|me(/avatar)?|share-code|sign|rewards|ledger|redemptions|orders(/[a-zA-Z0-9-]+(/(pay|cancel))?)?|addresses(/[a-zA-Z0-9-]+)?|appointments|appointment-options|claims|shares|earnings|earnings-summary|subscriptions)"))return ResponseEntity.status(404).contentType(MediaType.APPLICATION_JSON).body("{\"error\":\"接口不存在\"}");
   return forward(req,uri,body,false);
  }
 
  @RequestMapping({"/anqi/{resource}","/anqi/{resource}/{id}"})
- @Log(title="暨美丽业务管理",businessType=BusinessType.OTHER,isSaveRequestData=false,isSaveResponseData=false)
+ @Log(title="秀荣科技美肤业务管理",businessType=BusinessType.OTHER,isSaveRequestData=false,isSaveResponseData=false)
  public Object admin(@PathVariable String resource,@PathVariable(required=false) String id,HttpServletRequest req,@RequestBody(required=false) String body){
-  if(!resource.matches("dashboard|config|upload|products|stores|users|orders|appointments|addresses|claims|activities|alliances|shares|earnings|rewards|ledger|redemptions|audit|paymentAudits|categories|homeModules|assets|staff|shifts|incomeRules|incomePlans"))return AjaxResult.error("业务资源不存在");
+  if(!resource.matches("dashboard|config|upload|products|stores|users|orders|appointments|addresses|claims|activities|alliances|shares|earnings|rewards|ledger|redemptions|audit|paymentAudits|categories|homeModules|assets|staff|shifts|incomeRules|incomePlans|notifications|notificationTemplates"))return AjaxResult.error("业务资源不存在");
   if(id!=null&&!id.matches("[a-zA-Z0-9-]+"))return AjaxResult.error("编号无效");
   String action="GET".equals(req.getMethod())?"list":"edit";
-  String permissionResource=(resource.equals("incomeRules")||resource.equals("incomePlans"))?"earnings":resource.equals("shifts")?"staff":(resource.equals("homeModules")||resource.equals("assets"))?"config":resource;
+  String permissionResource=(resource.equals("incomeRules")||resource.equals("incomePlans"))?"earnings":resource.equals("shifts")?"staff":(resource.equals("homeModules")||resource.equals("assets")||resource.equals("notifications")||resource.equals("notificationTemplates"))?"config":resource;
   Set<String> permissions=SecurityUtils.getLoginUser().getPermissions();
   if(!SecurityUtils.isAdmin(SecurityUtils.getUserId())&&!permissions.contains("*:*:*")&&!permissions.contains("anqi:"+permissionResource+":"+action))return AjaxResult.error(403,"无此业务操作权限");
   if(secret==null||secret.trim().isEmpty())return AjaxResult.error(503,"业务服务未配置内部密钥");
