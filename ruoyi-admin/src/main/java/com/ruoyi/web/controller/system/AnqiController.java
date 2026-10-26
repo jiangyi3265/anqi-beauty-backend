@@ -28,20 +28,20 @@ public class AnqiController {
  @RequestMapping("/api/**")
  public ResponseEntity<String> customer(HttpServletRequest req,@RequestBody(required=false) String body){
   String uri=req.getRequestURI();
-  if(!uri.matches("/api/(health|bootstrap|auth/(wechat|refresh|logout)|activities|alliances|me(/avatar)?|share-code|sign|rewards|ledger|redemptions|orders(/[a-zA-Z0-9-]+(/(pay|cancel))?)?|addresses(/[a-zA-Z0-9-]+)?|appointments|appointment-options|claims|shares|earnings|earnings-summary|subscriptions)"))return ResponseEntity.status(404).contentType(MediaType.APPLICATION_JSON).body("{\"error\":\"接口不存在\"}");
+  if(!uri.matches("/api/(health|bootstrap|transfer-notify|auth/(wechat|refresh|logout)|activities|alliances|me(/avatar)?|share-code|invite/bind|sign|rewards|ledger|redemptions|orders(/[a-zA-Z0-9-]+(/(pay|cancel))?)?|addresses(/[a-zA-Z0-9-]+)?|appointments|appointment-options|claims|shares|earnings|earnings-summary|subscriptions)"))return ResponseEntity.status(404).contentType(MediaType.APPLICATION_JSON).body("{\"error\":\"接口不存在\"}");
   return forward(req,uri,body,false);
  }
 
  @RequestMapping({"/anqi/{resource}","/anqi/{resource}/{id}"})
  @Log(title="秀荣科技美肤业务管理",businessType=BusinessType.OTHER,isSaveRequestData=false,isSaveResponseData=false)
  public Object admin(@PathVariable String resource,@PathVariable(required=false) String id,HttpServletRequest req,@RequestBody(required=false) String body){
-  if(!resource.matches("dashboard|config|upload|products|stores|users|orders|appointments|addresses|claims|activities|alliances|shares|earnings|rewards|ledger|redemptions|audit|paymentAudits|categories|homeModules|assets|staff|shifts|incomeRules|incomePlans|notifications|notificationTemplates|legacyMembers"))return AjaxResult.error("业务资源不存在");
+  if(!resource.matches("dashboard|config|upload|products|stores|users|orders|appointments|addresses|claims|activities|alliances|shares|earnings|rewards|ledger|redemptions|audit|paymentAudits|categories|homeModules|assets|staff|shifts|incomeRules|incomePlans|notifications|notificationTemplates|legacyMembers|shareholders"))return AjaxResult.error("业务资源不存在");
   if(id!=null&&!id.matches("[a-zA-Z0-9-]+"))return AjaxResult.error("编号无效");
   String action="GET".equals(req.getMethod())?"list":"edit";
-  String permissionResource=resource.equals("legacyMembers")?"users":(resource.equals("incomeRules")||resource.equals("incomePlans"))?"earnings":resource.equals("shifts")?"staff":(resource.equals("homeModules")||resource.equals("assets")||resource.equals("notifications")||resource.equals("notificationTemplates"))?"config":resource;
+  String permissionResource=resource.equals("legacyMembers")?"users":(resource.equals("incomeRules")||resource.equals("incomePlans")||resource.equals("shareholders"))?"earnings":resource.equals("shifts")?"staff":(resource.equals("homeModules")||resource.equals("assets")||resource.equals("notifications")||resource.equals("notificationTemplates"))?"config":resource;
   Set<String> permissions=SecurityUtils.getLoginUser().getPermissions();
   if(!SecurityUtils.isAdmin(SecurityUtils.getUserId())&&!permissions.contains("*:*:*")&&!permissions.contains("anqi:"+permissionResource+":"+action))return AjaxResult.error(403,"无此业务操作权限");
-  if(resource.equals("legacyMembers")&&!SecurityUtils.isAdmin(SecurityUtils.getUserId())&&!permissions.contains("*:*:*")){
+  if((resource.equals("legacyMembers")||(resource.equals("shareholders")&&"member".equals(id)))&&!SecurityUtils.isAdmin(SecurityUtils.getUserId())&&!permissions.contains("*:*:*")){
    String[] required="GET".equals(req.getMethod())?new String[]{"anqi:users:list","anqi:products:list","anqi:stores:list","anqi:earnings:list"}:new String[]{"anqi:users:edit","anqi:earnings:edit","anqi:orders:edit"};
    for(String permission:required)if(!permissions.contains(permission))return AjaxResult.error(403,"需要会员、订单及收益管理权限");
   }
@@ -60,6 +60,7 @@ public class AnqiController {
  private ResponseEntity<String> forward(HttpServletRequest req,String uri,String body,boolean admin){
   HttpHeaders headers=new HttpHeaders();headers.setContentType(MediaType.APPLICATION_JSON);
   if(req.getHeader("Authorization")!=null)headers.set("Authorization",req.getHeader("Authorization"));
+  for(String header:new String[]{"Wechatpay-Timestamp","Wechatpay-Nonce","Wechatpay-Signature","Wechatpay-Serial"})if(req.getHeader(header)!=null)headers.set(header,req.getHeader(header));
   if(req.getHeader("Idempotency-Key")!=null)headers.set("Idempotency-Key",req.getHeader("Idempotency-Key"));
   headers.set("X-Real-IP",IpUtils.getIpAddr(req));
   if(admin){headers.set("X-Anqi-Internal",secret);headers.set("X-Anqi-Actor",SecurityUtils.getUsername());}
